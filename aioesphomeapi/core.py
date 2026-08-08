@@ -54,6 +54,7 @@ from .api_pb2 import (  # type: ignore[attr-defined]
     DeviceStateResponse,
     DisconnectRequest,
     DisconnectResponse,
+    EntityAvailabilityStateResponse,
     EventResponse,
     ExecuteServiceRequest,
     ExecuteServiceResponse,
@@ -555,6 +556,7 @@ MESSAGE_TYPE_TO_PROTO = {
     147: SerialProxyRequestResponse,
     148: ListEntitiesRadioFrequencyResponse,
     149: DeviceStateResponse,
+    150: EntityAvailabilityStateResponse,
 }
 
 MESSAGE_NUMBER_TO_PROTO = tuple(MESSAGE_TYPE_TO_PROTO.values())
