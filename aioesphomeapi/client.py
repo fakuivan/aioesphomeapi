@@ -48,6 +48,7 @@ from .api_pb2 import (  # type: ignore[attr-defined]
     DeviceInfoRequest,
     DeviceInfoResponse,
     DeviceStateResponse,
+    EntityAvailabilityStateResponse,
     ExecuteServiceArgument,
     ExecuteServiceRequest,
     ExecuteServiceResponse,
@@ -116,6 +117,7 @@ from .client_base import (
     on_bluetooth_message_types,
     on_bluetooth_scanner_state_response,
     on_device_state_msg,
+    on_entity_availability_state_msg,
     on_home_assistant_action_request,
     on_infrared_rf_receive_event,
     on_serial_proxy_data_received,
@@ -153,6 +155,7 @@ from .model import (
     ClimateSwingMode,
     DeviceInfo,
     DeviceState,
+    EntityAvailabilityState,
     EntityInfo,
     EntityState,
     ESPHomeBluetoothGATTServices,
@@ -274,6 +277,7 @@ SUBSCRIBE_STATES_MSG_TYPES = (
 )
 
 DEVICE_STATE_MSG_TYPES = (DeviceStateResponse,)
+ENTITY_AVAILABILITY_STATE_MSG_TYPES = (EntityAvailabilityStateResponse,)
 
 LIST_ENTITIES_MSG_TYPES = (
     ListEntitiesDoneResponse,
@@ -504,6 +508,8 @@ class APIClient(APIClientBase):
         on_state: Callable[[EntityState], None],
         *,
         on_device_state: Callable[[DeviceState], None] | None = None,
+        on_entity_availability_state: Callable[[EntityAvailabilityState], None]
+        | None = None,
     ) -> None:
         """Subscribe to state updates."""
         connection = self._get_connection()
@@ -511,6 +517,14 @@ class APIClient(APIClientBase):
             connection.add_message_callback(
                 partial(on_device_state_msg, on_device_state),
                 DEVICE_STATE_MSG_TYPES,
+            )
+        if on_entity_availability_state is not None:
+            connection.add_message_callback(
+                partial(
+                    on_entity_availability_state_msg,
+                    on_entity_availability_state,
+                ),
+                ENTITY_AVAILABILITY_STATE_MSG_TYPES,
             )
         connection.send_message_callback_response(
             SubscribeStatesRequest(),
@@ -1388,6 +1402,8 @@ class APIClient(APIClientBase):
         on_state_request: Callable[[str, str | None], None] | None = None,
         *,
         on_device_state: Callable[[DeviceState], None] | None = None,
+        on_entity_availability_state: Callable[[EntityAvailabilityState], None]
+        | None = None,
     ) -> None:
         """Subscribe to all state updates and service calls in a single request.
 
@@ -1405,6 +1421,14 @@ class APIClient(APIClientBase):
             connection.add_message_callback(
                 partial(on_device_state_msg, on_device_state),
                 DEVICE_STATE_MSG_TYPES,
+            )
+        if on_entity_availability_state is not None:
+            connection.add_message_callback(
+                partial(
+                    on_entity_availability_state_msg,
+                    on_entity_availability_state,
+                ),
+                ENTITY_AVAILABILITY_STATE_MSG_TYPES,
             )
         connection.add_message_callback(
             partial(on_home_assistant_action_request, on_service_call),

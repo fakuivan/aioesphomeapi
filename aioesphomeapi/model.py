@@ -301,6 +301,35 @@ class EntityCategory(APIIntEnum):
     DIAGNOSTIC = 2
 
 
+class EntityType(APIIntEnum):
+    NONE = 0
+    BINARY_SENSOR = 1
+    COVER = 2
+    FAN = 3
+    LIGHT = 4
+    SENSOR = 5
+    SWITCH = 6
+    BUTTON = 7
+    TEXT_SENSOR = 8
+    CLIMATE = 9
+    NUMBER = 10
+    DATETIME_DATE = 11
+    DATETIME_TIME = 12
+    DATETIME_DATETIME = 13
+    TEXT = 14
+    SELECT = 15
+    LOCK = 16
+    VALVE = 17
+    MEDIA_PLAYER = 18
+    ALARM_CONTROL_PANEL = 19
+    WATER_HEATER = 20
+    INFRARED = 21
+    RADIO_FREQUENCY = 22
+    EVENT = 23
+    UPDATE = 24
+    CAMERA = 25
+
+
 @_frozen_dataclass_decorator
 class EntityInfo(APIModelBase):
     object_id: str = ""
@@ -317,6 +346,16 @@ class EntityInfo(APIModelBase):
 @_frozen_dataclass_decorator
 class EntityState(APIModelBase):
     key: int = 0
+    device_id: int = 0
+
+
+@_frozen_dataclass_decorator
+class EntityAvailabilityState(APIModelBase):
+    key: int = 0
+    entity_type: EntityType | None = converter_field(
+        default=EntityType.NONE, converter=EntityType.convert
+    )
+    available: bool = False
     device_id: int = 0
 
 
@@ -2078,9 +2117,11 @@ __all__ = (
     "DeviceInfo",
     "DeviceState",
     "ESPHomeBluetoothGATTServices",
+    "EntityAvailabilityState",
     "EntityCategory",
     "EntityInfo",
     "EntityState",
+    "EntityType",
     "Event",
     "EventInfo",
     "ExecuteServiceResponse",

@@ -51,6 +51,7 @@ from aioesphomeapi.api_pb2 import (
     DeviceInfoResponse,
     DeviceStateResponse,
     DisconnectResponse,
+    EntityAvailabilityStateResponse,
     ExecuteServiceArgument,
     ExecuteServiceRequest,
     ExecuteServiceResponse as ExecuteServiceResponsePb,
@@ -139,6 +140,8 @@ from aioesphomeapi.model import (
     ClimateSwingMode,
     DeviceInfo,
     DeviceState,
+    EntityAvailabilityState,
+    EntityType,
     ESPHomeBluetoothGATTServices,
     FanDirection,
     FanSpeed,
@@ -589,6 +592,41 @@ async def test_subscribe_states_device_state_callback(
     )
     on_state.assert_not_called()
     on_device_state.assert_called_once_with(DeviceState(device_id=7, available=True))
+
+
+async def test_subscribe_states_entity_availability_state_callback(
+    api_client: tuple[
+        APIClient, APIConnection, asyncio.Transport, APIPlaintextFrameHelper
+    ],
+) -> None:
+    auth_client, _connection, _transport, protocol = api_client
+    on_state = MagicMock()
+    on_entity_availability_state = MagicMock()
+    auth_client.subscribe_states(
+        on_state,
+        on_entity_availability_state=on_entity_availability_state,
+    )
+
+    mock_data_received(
+        protocol,
+        generate_plaintext_packet(
+            EntityAvailabilityStateResponse(
+                key=42,
+                entity_type=EntityType.SENSOR,
+                available=False,
+                device_id=7,
+            )
+        ),
+    )
+    on_state.assert_not_called()
+    on_entity_availability_state.assert_called_once_with(
+        EntityAvailabilityState(
+            key=42,
+            device_id=7,
+            entity_type=EntityType.SENSOR,
+            available=False,
+        )
+    )
 
 
 async def test_subscribe_states_camera(auth_client: APIClient) -> None:
@@ -2979,6 +3017,7 @@ async def test_subscribe_home_assistant_states_and_services(
     on_state_sub = MagicMock()
     on_state_request = MagicMock()
     on_device_state = MagicMock()
+    on_entity_availability_state = MagicMock()
 
     # Call the unified subscription method
     client.subscribe_home_assistant_states_and_services(
@@ -2987,6 +3026,7 @@ async def test_subscribe_home_assistant_states_and_services(
         on_state_sub=on_state_sub,
         on_state_request=on_state_request,
         on_device_state=on_device_state,
+        on_entity_availability_state=on_entity_availability_state,
     )
 
     # Verify that all three subscription messages were sent in a single call
@@ -3007,6 +3047,22 @@ async def test_subscribe_home_assistant_states_and_services(
     device_state_msg = DeviceStateResponse(device_id=7, available=False)
     mock_data_received(protocol, generate_plaintext_packet(device_state_msg))
     on_device_state.assert_called_once_with(DeviceState(device_id=7, available=False))
+
+    entity_availability_msg = EntityAvailabilityStateResponse(
+        key=42,
+        entity_type=EntityType.SENSOR,
+        available=True,
+        device_id=7,
+    )
+    mock_data_received(protocol, generate_plaintext_packet(entity_availability_msg))
+    on_entity_availability_state.assert_called_once_with(
+        EntityAvailabilityState(
+            key=42,
+            device_id=7,
+            entity_type=EntityType.SENSOR,
+            available=True,
+        )
+    )
 
     # Test service call
     on_state.reset_mock()
